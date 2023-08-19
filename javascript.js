@@ -53,11 +53,11 @@ function depositMoney() {
         return numberDepositAmount;
         }
     }
-}
+};
 
 function getNumberOfLines() {
     while (true) {
-        const lines = prompt("How much would you like to bet per line (1-5): ");
+        const lines = prompt("How many lines would you you like to bet on (1-5): ");
         const numberOfLines = parseInt(lines);
 
         if (isNaN(numberOfLines) || numberOfLines <= 0 || numberOfLines > 5) {
@@ -66,11 +66,11 @@ function getNumberOfLines() {
         return numberOfLines;
         }
     }
-}
+};
 
 function getUserBetAmounts(balance, lines) {
     while (true) {
-        let bet = prompt("How much would you like to bet?: ");
+        const bet = prompt("How much would you like to bet per line?: ");
         const betAmount = parseFloat(bet);
 
         if (isNaN(betAmount) || betAmount <= 0) {
@@ -86,15 +86,97 @@ function getUserBetAmounts(balance, lines) {
 function spinSlot() {
     const symbols = [];
     for (const [symbol, count] of Object.entries(SYMBOLS_COUNT)) {
-        console.log(symbol, count);
-        
+        for (let i = 0; i < count; i++) {
+            symbols.push(symbol);
+        }
     }
-    // for (let i = 0 ; i < 5; ++i){
-  
-    // }
-}
+    
+    const reels = [];
+    for (let i = 0; i < COLLUMS; i++) {
+        reels.push([]);
+        const reelSymbols = [...symbols];
+       for (let j = 0; i < ROWS; j++) {
+            const randomIndex = Math.floor(Math.random() * reelSymbols.length);
+            const selectedSymbol = reelSymbols[randomIndex];
+            reels[i].push(selectedSymbol);
+            reelSymbols.splice(randomIndex, 1);
+        }
+    }
 
-spinSlot();
+    return reels;
+};
+
+function transpose(reels) {
+    const rows = [];
+
+    for (let i = 0; i < ROWS; i++) {
+        rows.push([]);
+        for (let j = 0; j < COLLUMS; j++) {
+            rows[i].push(reels[j][i])
+        }
+    }
+    return rows
+};
+
+function slotNumbers(rows) {
+    for (const row of rows) {
+        let rowString = "";
+        for (const [i, symbol] of row.entries()) {
+            rowString += symbol; 
+            if (i != row.length - 1) {
+                rowString += " | ";
+            }
+        }   
+        console.log(rowString)
+    }
+};
+
+function getWinnings(rows, bet, lines) {
+    let winnings = 0;
+
+    for (let row = 0; row < lines; row++) {
+        const symbols = rows[row];
+        let allSame = true;
+
+        for(const symbol of symbols) {
+            if (symbol != symbols[0]) {
+                allSame = false;
+                break;
+            }
+        }
+
+        if (allSame) {
+            winnings += bet * SYMBOLS_VALUES[symbols[0]];
+        }
+    }
+
+    return winnings;
+};
+
+function game() {
 let balance = depositMoney();
-const numberOfLines = getNumberOfLines();
-const bet = getUserBetAmounts(balance, numberOfLines);
+
+while (true) {
+    console.log("You have a balance of $" + balance);
+    const numberOfLines = getNumberOfLines();
+    const bet = getUserBetAmounts(balance, numberOfLines);
+    balance -= bet * numberOfLines;
+    const reels = spinSlot();
+    const rows = transpose(reels);
+    slotNumbers(rows);
+    const winnings = getWinnings(rows, bet, numberOfLines);
+    balance += winnings;
+    console.log("You won, $" + winnings.toString());
+
+    if (balance <= 0) {
+        console.log("You dont have enough funds to play");
+        break;
+    }
+    const playAgain = prompt("Would you like to play again (y/n)? ");
+    if (playAgain != "y") break;
+    }
+};
+
+
+
+game(); 
